@@ -1,0 +1,24 @@
+- name: Deploy Perception Binary to WSL
+  hosts: debian-adas-ecu
+  become: false  # Set to true if your target requires sudo
+  tasks:
+    - name: Create target directory
+      file:
+        path: /home/sooraj/perception
+        state: directory
+        mode: '0755'
+
+    - name: Copy binary
+      copy:
+        src: ../build/perception_main
+        dest: /home/sooraj/perception/perception_main
+        mode: '0755'
+
+    - name: Run binary and capture output
+      shell: /home/sooraj/perception/perception_main
+      register: output
+
+    - name: Print output
+      debug:
+        var: output.stdout_lines
+
