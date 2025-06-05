@@ -1,0 +1,90 @@
+pipeline {
+    agent any
+
+    environment {
+        REPO_URL = 'git@github.com:matrix-mayhem/ci.git'
+        BRANCH = 'master'
+        PROJECT_SUBDIR = 'adas_project'
+        BUILD_DIR = 'build'
+        BINARY_NAME = 'perception_main'
+        GTEST_BINARY = 'test_perception'
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: "${BRANCH}", url: "${REPO_URL}"
+            }
+        }
+
+        stage('CMake Build') {
+            steps {
+                // Navigate into the project subdirectory for this stage
+                dir("${PROJECT_SUBDIR}") { 
+                    sh '''
+                        rm -rf ${BUILD_DIR}
+                        mkdir -p ${BUILD_DIR}
+                        cd ${BUILD_DIR}
+                        cmake ..
+                        make
+                    '''
+                }
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                // Navigate into the project subdirectory before running tests
+                dir("${PROJECT_SUBDIR}") {
+                    sh '''
+                        cd ${BUILD_DIR}
+                        # Use the specific executable name for Google Test if not named by CTest
+                        # If CTest is configured correctly, `ctest` is usually enough.
+                        ctest --output-on-failure || ./${GTEST_BINARY}
+                    '''
+                }
+            }
+        }
+
+        stage('Static Code Analysis') {
+            steps {
+                // Navigate into the project subdirectory for static analysis
+                dir("${PROJECT_SUBDIR}") {
+                    sh '''
+                        cppcheck --enable=all --inconclusive --std=c++17 --force \
+                          --suppress=missingIncludeSystem \
+                          include/ src/ tests/ \
+                          2> cppcheck_report.txt || true
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Target via Ansible') {
+            steps {
+                dir("${PROJECT_SUBDIR}/ansible") {
+                    sh '''
+                        echo "Current directory: $(pwd)"
+                        ls -l
+                        ansible-playbook -i inventory deploy.yml
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Archive the report from the project's build directory if needed
+            // Assuming cppcheck_report.txt is generated in adas_project/cppcheck_report.txt
+            archiveArtifacts artifacts: "${PROJECT_SUBDIR}/cppcheck_report.txt", allowEmptyArchive: true
+        }
+
+        failure {
+            mail to: 'soorajlapasi@gmail.com',
+                 subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "Check Jenkins for details: ${env.BUILD_URL}"
+        }
+    }
+}

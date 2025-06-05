@@ -1,5 +1,2 @@
 [debian-adas-ecu]
-172.19.66.136
-ansible_connection = ssh
-ansible_user = sooraj
-ansible_port = 22
+172.19.66.136 ansible_connection=ssh ansible_user=sooraj ansible_port=22
