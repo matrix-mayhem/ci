@@ -14,10 +14,10 @@ set(SRC_FILES
 
 include_directories(
     include
-    /usr/include/dlt  # Adjust path if DLT is in a custom location
+    /usr/include/dlt
 )
 
-link_directories(/usr/lib)  # Adjust if needed for libdlt
+link_directories(/usr/lib)
 
 add_executable(perception_main ${SRC_FILES})
 target_link_libraries(perception_main dlt)
@@ -41,7 +41,7 @@ enable_testing()
 # -------------------------------
 set(TEST_FILES
     tests/test_perception.cpp
-    src/perception.cpp  # Include logic but not main()
+    src/perception.cpp
 )
 
 add_executable(test_perception ${TEST_FILES})
