@@ -1,24 +1,43 @@
-- name: Deploy Perception Binary to WSL
+- name: Deploy Perception Binaries to WSL
   hosts: debian-adas-ecu
   become: false
   tasks:
-    - name: Create target directory
+    - name: Create target directory for CMake binary
       file:
-        path: /home/sooraj/perception
+        path: /home/sooraj/perception_cmake
         state: directory
         mode: '0755'
 
-    - name: Copy binary
-      copy:
-        src: ../build/perception_main
-        dest: /home/sooraj/perception
+    - name: Create target directory for Bazel binary
+      file:
+        path: /home/sooraj/perception_bazel
+        state: directory
         mode: '0755'
 
-    - name: Run binary and capture output
-      shell: /home/sooraj/perception/perception_main
-      register: output
+    - name: Copy CMake-built binary
+      copy:
+        src: ../build/perception_main
+        dest: /home/sooraj/perception_cmake
+        mode: '0755'
 
-    - name: Print output
+    - name: Copy Bazel-built perception_main binary
+      copy:
+        src: ../bazel-bin/perception_main
+        dest: /home/sooraj/perception_bazel
+        mode: '0755'
+
+    - name: Run CMake-built binary and capture output
+      shell: /home/sooraj/perception_cmake/perception_main_cmake
+      register: cmake_output
+
+    - name: Print CMake binary output
       debug:
-        var: output.stdout_lines
+        var: cmake_output.stdout_lines
 
+    - name: Run Bazel-built binary and capture output
+      shell: /home/sooraj/perception_bazel/perception_main_bazel
+      register: bazel_output
+
+    - name: Print Bazel binary output
+      debug:
+        var: bazel_output.stdout_lines
