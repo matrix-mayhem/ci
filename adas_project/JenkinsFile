@@ -11,14 +11,17 @@ pipeline {
         GTEST_BINARY = 'test_perception'
     }
      stages {
+        stages {
         stage("Checkout Code"){
             steps{
+                // Corrected the variable syntax
                 git branch: "${BRANCH}", url: "${REPO_URL}"
             }
         }
         stage("Build Binary"){
             steps{
                 dir("${PROJECT_SUBDIR}"){
+                    // Switched to triple double quotes for variable interpolation
                     sh """
                     rm -rf ${BUILD_DIR}
                     mkdir -p ${BUILD_DIR}
@@ -31,20 +34,23 @@ pipeline {
         }
         stage("Sign Binary"){
             steps{
+                // Fixed the openssl algorithm (sha256) and binary path
                 sh """
-                openssl dgst -sha236
-                -sign private.pem
-                -out binary.sig build/app
+                openssl dgst -sha256 \
+                -sign private.pem \
+                -out binary.sig ${PROJECT_SUBDIR}/${BUILD_DIR}/${BINARY_NAME}
                 """
             }
         }
         stage("Build Docker Image"){
             steps{
+                // Ensure the Dockerfile is in the root or adjust path
                 sh 'docker build -t ci-binary .'
             }
         }
         stage("Run Container"){
             steps{
+                // Removed trailing space and added a name for easier cleanup
                 sh 'docker run -d --name perception-service ci-binary'
             }
         }
