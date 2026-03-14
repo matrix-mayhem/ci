@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         REPO_URL = 'git@github.com:matrix-mayhem/ci.git'
-        BRANCH = 'master'
+        BRANCH = 'awsci'
         PROJECT_SUBDIR = 'adas_project'
         BAZEL_BUILD_TARGET = '//:perception_main'
         BUILD_DIR = 'build'
