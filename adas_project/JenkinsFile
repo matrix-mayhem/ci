@@ -10,79 +10,115 @@ pipeline {
         BINARY_NAME = 'perception_main'
         GTEST_BINARY = 'test_perception'
     }
-
-    stages {
-
-        stage('Checkout Code') {
-            steps {
-                git branch: "${BRANCH}", url: "${REPO_URL}"
+     stages {
+        stage("Checkout Code"){
+            steps{
+                git branch: "${BRANCH}", url: "{$REPO_URL}"
             }
         }
-
-        stage('Build Projects') {
-            parallel {
-                stage('CMake Build') {
-                    steps {
-                        dir("${PROJECT_SUBDIR}") {
-                            sh '''
-                                rm -rf ${BUILD_DIR}
-                                mkdir -p ${BUILD_DIR}
-                                cd ${BUILD_DIR}
-                                cmake ..
-                                make
-                            '''
-                        }
-                    }
-                }
-
-                stage('Bazel Build') {
-                    steps {
-                        dir("${PROJECT_SUBDIR}") {
-                            sh '''
-                                bazel clean
-                                bazel build ${BAZEL_BUILD_TARGET}
-                            '''
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Run Unit Tests') {
-            steps {
-                dir("${PROJECT_SUBDIR}") {
+        stage("Build Binary"){
+            steps{
+                dir("${PROJECT_SUBDIR}"){
                     sh '''
-                        cd ${BUILD_DIR}
-                        ctest --output-on-failure || ./${GTEST_BINARY}
+                    rm -rf ${BUILD_DIR}
+                    mkdir -p ${BUILD_DIR}
+                    cd ${BUILD_DIR}
+                    cmake ..
+                    make
                     '''
                 }
             }
         }
-
-        stage('Static Code Analysis') {
-            steps {
-                dir("${PROJECT_SUBDIR}") {
-                    sh '''
-                        cppcheck --enable=all --inconclusive --std=c++17 --force \
-                          --suppress=missingIncludeSystem \
-                          include/ src/ tests/ \
-                          2> cppcheck_report.txt || true
-                    '''
-                }
+        stage("Sign Binary"){
+            steps{
+                sh '''
+                openssl dgst -sha236
+                -sign private.pem
+                -out binary.sig build/app
+                '''
+            }
+        }
+        stage("Build Docker Image"){
+            steps{
+                sh 'docker build -t ci-binary .'
+            }
+        }
+        stage("Run Container"){
+            steps{
+                sh 'docker run -d ci-binary '
             }
         }
 
-        stage('Deploy to Target via Ansible') {
-            steps {
-                dir("${PROJECT_SUBDIR}/ansible") {
-                    sh '''
-                        echo "Current directory: $(pwd)"
-                        ls -l
-                        ansible-playbook -i inventory deploy.yml
-                    '''
-                }
-            }
-        }
+    //     stage('Checkout Code') {
+    //         steps {
+    //             git branch: "${BRANCH}", url: "${REPO_URL}"
+    //         }
+    //     }
+
+    //     stage('Build Projects') {
+    //         parallel {
+    //             stage('CMake Build') {
+    //                 steps {
+    //                     dir("${PROJECT_SUBDIR}") {
+    //                         sh '''
+    //                             rm -rf ${BUILD_DIR}
+    //                             mkdir -p ${BUILD_DIR}
+    //                             cd ${BUILD_DIR}
+    //                             cmake ..
+    //                             make
+    //                         '''
+    //                     }
+    //                 }
+    //             }
+
+    //             stage('Bazel Build') {
+    //                 steps {
+    //                     dir("${PROJECT_SUBDIR}") {
+    //                         sh '''
+    //                             bazel clean
+    //                             bazel build ${BAZEL_BUILD_TARGET}
+    //                         '''
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     stage('Run Unit Tests') {
+    //         steps {
+    //             dir("${PROJECT_SUBDIR}") {
+    //                 sh '''
+    //                     cd ${BUILD_DIR}
+    //                     ctest --output-on-failure || ./${GTEST_BINARY}
+    //                 '''
+    //             }
+    //         }
+    //     }
+
+    //     stage('Static Code Analysis') {
+    //         steps {
+    //             dir("${PROJECT_SUBDIR}") {
+    //                 sh '''
+    //                     cppcheck --enable=all --inconclusive --std=c++17 --force \
+    //                       --suppress=missingIncludeSystem \
+    //                       include/ src/ tests/ \
+    //                       2> cppcheck_report.txt || true
+    //                 '''
+    //             }
+    //         }
+    //     }
+
+    //     stage('Deploy to Target via Ansible') {
+    //         steps {
+    //             dir("${PROJECT_SUBDIR}/ansible") {
+    //                 sh '''
+    //                     echo "Current directory: $(pwd)"
+    //                     ls -l
+    //                     ansible-playbook -i inventory deploy.yml
+    //                 '''
+    //             }
+    //         }
+    //     }
     }
 
     post {
