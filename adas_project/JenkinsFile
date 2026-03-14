@@ -13,29 +13,29 @@ pipeline {
      stages {
         stage("Checkout Code"){
             steps{
-                git branch: "${BRANCH}", url: "{$REPO_URL}"
+                git branch: "${BRANCH}", url: "${REPO_URL}"
             }
         }
         stage("Build Binary"){
             steps{
                 dir("${PROJECT_SUBDIR}"){
-                    sh '''
+                    sh """
                     rm -rf ${BUILD_DIR}
                     mkdir -p ${BUILD_DIR}
                     cd ${BUILD_DIR}
                     cmake ..
                     make
-                    '''
+                    """
                 }
             }
         }
         stage("Sign Binary"){
             steps{
-                sh '''
+                sh """
                 openssl dgst -sha236
                 -sign private.pem
                 -out binary.sig build/app
-                '''
+                """
             }
         }
         stage("Build Docker Image"){
@@ -45,7 +45,7 @@ pipeline {
         }
         stage("Run Container"){
             steps{
-                sh 'docker run -d ci-binary '
+                sh 'docker run -d --name perception-service ci-binary'
             }
         }
 

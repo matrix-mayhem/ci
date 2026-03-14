@@ -12,3 +12,8 @@ or Secrets Manager
 2. Monitorings
 Inside EC2
 sudo yum install amazon-cloudwatch-agent
+
+
+3. ec2 packages installation required
+sudo yum install java-17-amazon-corretto -y
+sudo yum install git -y
