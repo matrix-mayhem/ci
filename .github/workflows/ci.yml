@@ -20,12 +20,13 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install build-essential openssl -y
+          sudo apt-get install build-essential openssl python -y
       
-      - name: Install AWS CLI
+      - name: Install AWS CLI v2
         run: |
-          python -m pip install --upgrade pip
-          pip install awscli
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
       
       - name: Check AWS CLI
         run: aws --version
