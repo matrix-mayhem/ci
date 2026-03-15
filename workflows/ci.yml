@@ -35,8 +35,8 @@ jobs:
     
     - name: Generate PKI certificate
       run: |
-        chmod +x pki/generate_ca.sh
-        ./pki/generate_ca.sh
+        chmod +x adas_project/pki/generate_ca.sh
+        ./adas_project/pki/generate_ca.sh
     
     - name: Sign Binary
       run: |
