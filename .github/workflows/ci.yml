@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install build-essential openssl python -y
+          sudo apt-get install build-essential openssl -y
       
       - name: Install AWS CLI v2
         run: |
