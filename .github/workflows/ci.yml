@@ -59,6 +59,7 @@ jobs:
         run: |
           aws s3 cp app_binary s3://${{ secrets.S3_BUCKET }}/app_binary
           aws s3 cp binary.sig s3://${{ secrets.S3_BUCKET }}/binary.sig
+          aws s3 cp rootCA.pem s3://${{ secrets.S3_BUCKET }}/rootCA.pem
 
       - name: Build Docker Image
         run: |

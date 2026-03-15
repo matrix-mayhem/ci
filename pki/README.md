@@ -40,3 +40,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo build2
+
+4. Give your user permission to run docker without 'sudo'
+sudo usermod -aG docker $USER
