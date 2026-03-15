@@ -1,7 +1,10 @@
-FROM amazonlinux:2
+FROM python:3.12
 
-WORKDIR /app
+COPY tls/server.py .
+COPY server.crt .
+COPY rootCA.pem .
+COPY server.key .
 
-COPY build/app_binary .
+EXPOSE 8443
 
-CMD ["./app_binary"]
+CMD ["python","server.py"]

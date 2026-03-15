@@ -2,7 +2,9 @@ name: Secure CI/CD Pipeline
 
 on:
   push:
-    branches: [awsci]
+    branches:
+      - main
+      - awscili
   
 jobs:
   build:
