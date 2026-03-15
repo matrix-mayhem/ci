@@ -43,3 +43,6 @@ jobs:
 
 4. Give your user permission to run docker without 'sudo'
 sudo usermod -aG docker $USER
+
+5. To look inside the docker
+ docker run -it secure-ci-demo bash

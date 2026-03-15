@@ -1,21 +1,15 @@
 import http.server
 import ssl
 
-class Handler(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Secure TLS/mTLS server running")
+httpd = http.server.HTTPServer(("0.0.0.0", 8443), http.server.SimpleHTTPRequestHandler)
 
-server = http.server.HTTPServer(("0.0.0.0", 8443), Handler)
+context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+context.load_cert_chain(certfile="server.crt", keyfile="server.key")
+context.load_verify_locations("rootCA.pem")
+context.verify_mode = ssl.CERT_REQUIRED
 
-server.socket = ssl.wrap_socket(
-    server.socket,
-    certfile="server.crt",
-    keyfile="server.key",
-    ca_certs="rootCA.pem",
-    cert_reqs=ssl.CERT_REQUIRED
-)
+httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
 
-print("Starting secure mTLS server...")
-server.serve_forever()
+print("mTLS server started on port 8443")
+
+httpd.serve_forever()

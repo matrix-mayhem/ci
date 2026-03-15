@@ -64,3 +64,28 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build -t secure-ci-demo .
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            echo "Downloading artifacts from S3..."
+
+            aws s3 cp s3://${{ secrets.S3_BUCKET }}/app_binary .
+            aws s3 cp s3://${{ secrets.S3_BUCKET }}/binary.sig .
+            aws s3 cp s3://${{ secrets.S3_BUCKET }}/rootCA.pem .
+
+            echo "Verifying binary..."
+
+            openssl x509 -pubkey -noout -in rootCA.pem > public.pem
+
+            openssl dgst -sha256 \
+            -verify public.pem \
+            -signature binary.sig \
+            app_binary
+
+            chmod +x app_binary
+            ./app_binary
