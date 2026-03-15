@@ -40,7 +40,7 @@ jobs:
           openssl x509 -pubkey -noout -in rootCA.pem > public.pem
           openssl dgst -sha256 -verify public.pem -signature binary.sig app_binary
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credential
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
