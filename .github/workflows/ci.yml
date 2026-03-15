@@ -4,56 +4,53 @@ on:
   push:
     branches:
       - main
-      - awscili
-  
+      - awscli
+
 jobs:
+
   build:
+
     runs-on: ubuntu-latest
-  
-  env:
-    PROJECT_SUBDIR: project
-    BUILD_DIR: build
 
-  steps:
+    steps:
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install build-essential openssl awscli cmake -y
-    
-    - name: Build Project
-      run: |
-        cd $PROJECT_SUBDIR
-        rm -rf $BUILD_DIR
-        mkdir -p $BUILD_DIR
-        cd $BUILD_DIR
-        cmake ..
-        make
-    
-    - name: Generate PKI certificate
-      run: |
-        chmod +x adas_project/pki/generate_ca.sh
-        ./adas_project/pki/generate_ca.sh
-    
-    - name: Sign Binary
-      run: |
-        openssl dgst -sha256 -sign rootCA.key -out binary.sig app_binary
-      
-    - name: Verify Signature
-      run: |
-        openssl x509 -pubkey -noout -in rootCA.pem > public.pem
-        openssl dgst -sha256 -verify public.pem -signature binary.sig app_binary
-    
-    - name: Upload Artifact to S3
-      run: |
-        aws s3 cp app_binary s3://${{ secrets.S3_BUCKET }}/app_binary
-        aws s3 cp binary.sig s3://${{ secrets.S3_BUCKET }}/binary.sig
-    
-    - name: Build Docker Image
-      run: |
-        docker build -t secure-ci-demo .
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential openssl awscli -y
 
-    
+      - name: Build C Binary
+        run: |
+          gcc src/main.c -o app_binary
+
+      - name: Generate PKI Certificates
+        run: |
+          chmod +x pki/generate_ca.sh
+          ./pki/generate_ca.sh
+
+      - name: Sign Binary
+        run: |
+          openssl dgst -sha256 -sign rootCA.key -out binary.sig app_binary
+
+      - name: Verify Signature
+        run: |
+          openssl x509 -pubkey -noout -in rootCA.pem > public.pem
+          openssl dgst -sha256 -verify public.pem -signature binary.sig app_binary
+
+      - name: Configure AWS Credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ secrets.AWS_REGION }}
+
+      - name: Upload Artifacts to S3
+        run: |
+          aws s3 cp app_binary s3://${{ secrets.S3_BUCKET }}/
+          aws s3 cp binary.sig s3://${{ secrets.S3_BUCKET }}/
+
+      - name: Build Docker Image
+        run: |
+          docker build -t secure-ci-demo .

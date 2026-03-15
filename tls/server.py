@@ -17,6 +17,5 @@ server.socket = ssl.wrap_socket(
     cert_reqs=ssl.CERT_REQUIRED
 )
 
-print("Secure mTLS server started on port 8443")
-
+print("Starting secure mTLS server...")
 server.serve_forever()
